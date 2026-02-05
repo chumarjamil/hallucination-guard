@@ -1,4 +1,4 @@
-.PHONY: install dev test lint typecheck format serve demo docker docker-run docker-stop clean
+.PHONY: install dev test lint typecheck format serve demo clean
 
 # ---------------------------------------------------------------------------
 # Setup
@@ -39,19 +39,6 @@ serve:
 
 demo:
 	hallucination-guard check "The Eiffel Tower is located in Berlin and was built in 1920."
-
-# ---------------------------------------------------------------------------
-# Docker
-# ---------------------------------------------------------------------------
-
-docker:
-	docker build -t hallucination-guard .
-
-docker-run:
-	docker compose up -d
-
-docker-stop:
-	docker compose down
 
 # ---------------------------------------------------------------------------
 # Cleanup

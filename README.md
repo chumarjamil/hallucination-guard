@@ -1,17 +1,18 @@
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.10%2B-blue?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.10+">
+  <img src="https://img.shields.io/badge/npm-package-red?style=for-the-badge&logo=npm&logoColor=white" alt="npm">
+  <img src="https://img.shields.io/badge/typescript-ready-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License: MIT">
   <img src="https://img.shields.io/badge/status-active-brightgreen?style=for-the-badge" alt="Status: Active">
-  <img src="https://img.shields.io/github/actions/workflow/status/chumarjamil/hallucination-guard/ci.yml?branch=main&style=for-the-badge&label=CI" alt="Build Status">
-  <img src="https://img.shields.io/badge/code%20style-ruff-000000?style=for-the-badge" alt="Code style: ruff">
 </p>
 
 <h1 align="center">🛡 Hallucination Guard</h1>
 
 <p align="center">
-  <strong>The open-source standard for hallucination detection in AI-generated text.</strong><br><br>
-  <code>pip install hallucination-guard</code><br><br>
-  Python SDK · Global CLI · REST API · LangChain / LlamaIndex Ready
+  <strong>The open-source standard for hallucination detection in AI-generated text.</strong><br>
+  <strong>Works with Python, Node.js, TypeScript — any stack.</strong><br><br>
+  <code>pip install hallucination-guard</code> · <code>npm install hallucination-guard</code><br><br>
+  Python SDK · Node.js SDK · Global CLI · REST API · LangChain / LlamaIndex Ready
 </p>
 
 ---
@@ -43,20 +44,33 @@ Input Text → Claim Extraction → Fact Verification → Risk Scoring → Expla
 | **Python SDK**         | `from hallucination_guard import detect`           |
 | **REST API**           | `hallucination-guard api --port 8000`              |
 | **Integrations**       | LangChain, LlamaIndex, RAG, Streamlit              |
-| **Docker**             | One-command deployment                             |
-| **CI/CD**              | GitHub Actions (lint, type check, test, Docker)    |
+| **Node.js / TS SDK**   | `npm install` — use from any JS/TS project         |
+| **Cross-platform**     | Works on macOS, Linux, Windows                     |
 
 ---
 
 ## Quick Start
 
-### Install
+### Python
 
 ```bash
 pip install hallucination-guard
+python -m spacy download en_core_web_sm
 ```
 
-Or from source:
+### Node.js / TypeScript
+
+```bash
+npm install hallucination-guard
+# or
+yarn add hallucination-guard
+# or
+pnpm add hallucination-guard
+```
+
+> **Note:** The npm package requires the Python engine installed via `pip install hallucination-guard`.
+
+### From Source
 
 ```bash
 git clone https://github.com/chumarjamil/hallucination-guard.git
@@ -65,11 +79,13 @@ pip install -e .
 python -m spacy download en_core_web_sm
 ```
 
-### Try It
+### Try It — One Command
 
 ```bash
 hallucination-guard check "The Eiffel Tower is located in Berlin."
 ```
+
+### Try It — Python
 
 ```python
 from hallucination_guard import detect
@@ -78,6 +94,17 @@ result = detect("The Eiffel Tower is located in Berlin.")
 print(result.hallucinated)     # True
 print(result.confidence)       # 0.91
 print(result.explanation)      # "Detected 1 unsupported claim(s) …"
+```
+
+### Try It — TypeScript / JavaScript
+
+```typescript
+import { detect } from 'hallucination-guard';
+
+const result = await detect("The Eiffel Tower is located in Berlin.");
+console.log(result.hallucinated);       // true
+console.log(result.confidence);         // 0.91
+console.log(result.explanation);        // "Detected 1 unsupported claim(s) …"
 ```
 
 ---
@@ -206,6 +233,69 @@ result = guard.detect("Your text here.")
 
 ---
 
+## Node.js / TypeScript SDK
+
+Same three functions, async-friendly:
+
+### `detect(text)` — Full Pipeline
+
+```typescript
+import { detect } from 'hallucination-guard';
+
+const result = await detect("Albert Einstein invented the telephone.");
+
+console.log(result.hallucinated);       // true
+console.log(result.hallucination_risk); // 0.68
+console.log(result.flagged_claims);     // [{claim: "...", confidence: 0.12}]
+console.log(result.highlighted_text);   // "⚠[Albert Einstein …]⚠"
+```
+
+### `score(text)` — Risk Score Only
+
+```typescript
+import { score } from 'hallucination-guard';
+
+const risk = await score("The Great Wall was built by NASA.");
+console.log(risk); // 0.72
+```
+
+### `explain(text)` — Structured Explanation
+
+```typescript
+import { explain } from 'hallucination-guard';
+
+const info = await explain("Mars is the largest planet.");
+console.log(info.hallucinated); // true
+console.log(info.claims);       // [{claim: "...", severity: "high"}]
+```
+
+### API Mode (No CLI Needed)
+
+If you prefer not to call the CLI subprocess, start the API server and use API mode:
+
+```typescript
+import { detect } from 'hallucination-guard';
+
+const result = await detect("Some text", {
+  mode: "api",
+  apiUrl: "http://localhost:8000",
+});
+```
+
+### Check Installation
+
+```typescript
+import { isInstalled } from 'hallucination-guard';
+
+if (await isInstalled()) {
+  console.log("Ready to use!");
+} else {
+  console.log("Run: pip install hallucination-guard");
+}
+```
+
+---
+
 ## REST API
 
 ### Start the Server
@@ -264,13 +354,6 @@ curl -X POST http://localhost:8000/detect \
   "highlighted_text": "⚠[The Great Wall of China was built in 1995 by NASA.]⚠",
   "explanation": "Detected 1 unsupported claim(s) out of 1. Hallucination risk: 72%."
 }
-```
-
-### Docker
-
-```bash
-docker compose up -d
-curl http://localhost:8000/health
 ```
 
 ---
@@ -378,13 +461,14 @@ Input Text
 │   │   └── server.py          # FastAPI REST server
 │   └── utils/
 │       └── config.py          # Env-based configuration
+├── npm/                       # Node.js / TypeScript SDK
+│   ├── src/index.ts           # JS/TS client library
+│   ├── bin/cli.js             # npx CLI wrapper
+│   └── package.json
 ├── tests/                     # Unit + integration tests
 ├── examples/                  # Integration examples
 ├── docs/                      # Architecture documentation
-├── .github/workflows/ci.yml   # CI pipeline
-├── pyproject.toml             # Package config + tool settings
-├── Dockerfile                 # Production container
-├── docker-compose.yml
+├── pyproject.toml             # Python package config
 ├── Makefile
 ├── CONTRIBUTING.md
 └── LICENSE
@@ -440,7 +524,6 @@ make typecheck    # mypy
 make format       # auto-format
 make serve        # start API with hot-reload
 make demo         # run CLI demo
-make docker       # build Docker image
 ```
 
 ---
@@ -452,8 +535,7 @@ make docker       # build Docker image
 - [x] REST API (FastAPI)
 - [x] Python SDK (`detect`, `score`, `explain`)
 - [x] Explanation engine with severity ratings
-- [x] Docker + docker-compose
-- [x] CI/CD (GitHub Actions)
+- [x] Node.js / TypeScript SDK (npm package)
 - [x] Integration examples (LangChain, LlamaIndex, RAG, Streamlit)
 - [ ] LLM-based claim extraction (GPT / Ollama / local)
 - [ ] Multi-source verification (Wikidata, PubMed, Knowledge Graph)
