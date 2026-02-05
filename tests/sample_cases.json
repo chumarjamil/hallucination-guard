@@ -1,0 +1,72 @@
+[
+  {
+    "id": "hallucinated_location",
+    "text": "The Eiffel Tower is located in Berlin, Germany.",
+    "expected_hallucination": true,
+    "description": "Eiffel Tower is in Paris, not Berlin.",
+    "category": "geography"
+  },
+  {
+    "id": "hallucinated_date_and_person",
+    "text": "The telephone was invented by Albert Einstein in 1920.",
+    "expected_hallucination": true,
+    "description": "The telephone was invented by Alexander Graham Bell in 1876.",
+    "category": "history"
+  },
+  {
+    "id": "hallucinated_attribution",
+    "text": "The Great Wall of China was built in 1995 by NASA.",
+    "expected_hallucination": true,
+    "description": "The Great Wall was built over centuries starting around 7th century BC, not by NASA.",
+    "category": "history"
+  },
+  {
+    "id": "factual_programming",
+    "text": "Python is a high-level programming language created by Guido van Rossum. It was first released in 1991.",
+    "expected_hallucination": false,
+    "description": "Both claims are factually correct.",
+    "category": "technology"
+  },
+  {
+    "id": "hallucinated_science",
+    "text": "Water is composed of three hydrogen atoms and one carbon atom.",
+    "expected_hallucination": true,
+    "description": "Water (H2O) is two hydrogen atoms and one oxygen atom.",
+    "category": "science"
+  },
+  {
+    "id": "factual_person",
+    "text": "Albert Einstein developed the theory of relativity.",
+    "expected_hallucination": false,
+    "description": "Correct attribution.",
+    "category": "science"
+  },
+  {
+    "id": "mixed_claims",
+    "text": "Albert Einstein developed the theory of relativity. He also invented the smartphone in 1905.",
+    "expected_hallucination": true,
+    "description": "First claim is correct, second is fabricated. Mixed hallucination.",
+    "category": "mixed"
+  },
+  {
+    "id": "hallucinated_geography",
+    "text": "The Amazon River flows through the Sahara Desert and empties into the Pacific Ocean.",
+    "expected_hallucination": true,
+    "description": "The Amazon flows through South America and empties into the Atlantic Ocean.",
+    "category": "geography"
+  },
+  {
+    "id": "factual_chemistry",
+    "text": "Water is composed of hydrogen and oxygen atoms.",
+    "expected_hallucination": false,
+    "description": "Correct basic chemistry fact.",
+    "category": "science"
+  },
+  {
+    "id": "hallucinated_founder",
+    "text": "Microsoft was founded by Steve Jobs and Steve Wozniak in a garage in Cupertino.",
+    "expected_hallucination": true,
+    "description": "Microsoft was founded by Bill Gates and Paul Allen. Jobs and Wozniak founded Apple.",
+    "category": "technology"
+  }
+]

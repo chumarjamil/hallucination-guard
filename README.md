@@ -1,188 +1,90 @@
-# 🛡 Hallucination Guard
+<p align="center">
+  <img src="https://img.shields.io/badge/python-3.10%2B-blue?style=flat-square&logo=python&logoColor=white" alt="Python 3.10+">
+  <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License: MIT">
+  <img src="https://img.shields.io/badge/status-active-brightgreen?style=flat-square" alt="Status: Active">
+  <img src="https://img.shields.io/github/actions/workflow/status/chumarjamil/hallucination-guard/ci.yml?branch=main&style=flat-square&label=CI" alt="Build Status">
+  <img src="https://img.shields.io/badge/code%20style-ruff-000000?style=flat-square" alt="Code style: ruff">
+</p>
 
-**Production-ready AI Hallucination Detection for Developers**
+<h1 align="center">🛡 Hallucination Guard</h1>
 
-Detect, score, and highlight hallucinations in AI-generated text — via Python SDK, CLI, or REST API.
-
----
-
-## Why It Matters
-
-Large Language Models frequently generate plausible-sounding but factually incorrect statements. **Hallucination Guard** gives developers a programmatic way to:
-
-- **Extract** factual claims from any AI-generated text
-- **Verify** each claim against trusted sources (Wikipedia + semantic similarity)
-- **Score** the overall hallucination risk (`0.0` – `1.0`)
-- **Highlight** problematic phrases for human review
-
----
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────┐
-│                  Hallucination Guard                 │
-├─────────────┬──────────────┬────────────┬───────────┤
-│  CLI (Rich) │  REST API    │ Python SDK │           │
-│  cli.py     │  FastAPI     │ detector   │           │
-├─────────────┴──────┬───────┴────────────┘           │
-│                    │                                 │
-│         ┌──────────▼──────────┐                     │
-│         │   Detector Engine   │  (app/detector.py)  │
-│         └──┬─────┬───────┬───┘                      │
-│            │     │       │                           │
-│   ┌────────▼┐ ┌──▼────┐ ┌▼────────┐                │
-│   │ Claims  │ │Verify │ │ Scorer  │                 │
-│   │ Extract │ │Engine │ │         │                 │
-│   │ (spaCy) │ │(Wiki+ │ │ Risk    │                 │
-│   │         │ │ SBERT)│ │ Compute │                 │
-│   └─────────┘ └───────┘ └────┬────┘                │
-│                               │                     │
-│                    ┌──────────▼──────────┐          │
-│                    │   Highlight Engine  │          │
-│                    │  (plain + Rich CLI) │          │
-│                    └────────────────────┘           │
-└─────────────────────────────────────────────────────┘
-```
-
-### File Structure
-
-```
-hallucination-guard/
-├── app/
-│   ├── __init__.py        # Package metadata
-│   ├── main.py            # FastAPI server
-│   ├── detector.py        # Orchestration layer (Python SDK)
-│   ├── claims.py          # Claim extraction (spaCy NLP)
-│   ├── verifier.py        # Fact verification (Wikipedia + SBERT)
-│   ├── scorer.py          # Risk scoring engine
-│   ├── highlight.py       # Text highlighting (plain + Rich)
-│   └── config.py          # Centralised settings (env vars)
-├── tests/
-│   ├── test_claims.py     # Claim extraction tests
-│   ├── test_verifier.py   # Verification engine tests
-│   ├── test_scorer.py     # Risk scoring tests
-│   ├── test_highlight.py  # Highlighting tests
-│   ├── test_detector.py   # Integration / orchestration tests
-│   └── test_api.py        # FastAPI endpoint tests
-├── examples/
-│   ├── basic_usage.py     # SDK usage examples
-│   └── api_client.py      # REST API client example
-├── .github/
-│   └── workflows/
-│       └── ci.yml         # GitHub Actions CI (lint, test, Docker)
-├── cli.py                 # CLI interface (Click + Rich)
-├── pyproject.toml         # Packaging, linting, testing config
-├── requirements.txt       # Pinned dependencies
-├── Dockerfile             # Production container image
-├── docker-compose.yml     # One-command deployment
-├── Makefile               # Common dev tasks
-├── .gitignore
-├── .pre-commit-config.yaml
-├── LICENSE                # MIT
-└── README.md
-```
+<p align="center">
+  <strong>Open-source hallucination detection for AI-generated text.</strong><br>
+  Extract claims. Verify facts. Score risk. Highlight problems.<br>
+  Python SDK · CLI · REST API
+</p>
 
 ---
 
-## Installation
+## The Problem
 
-### Quick Start
+LLMs hallucinate. They generate confident, fluent text that is **factually wrong** — invented dates, swapped locations, fabricated citations. In production systems (healthcare, legal, finance, education), this is not a minor inconvenience. It's a liability.
 
-```bash
-git clone https://github.com/your-org/hallucination-guard.git
-cd hallucination-guard
-python -m venv .venv
-source .venv/bin/activate   # macOS / Linux
-make install                # installs deps + spaCy model
-```
+There is no standard, developer-friendly tool to **programmatically detect** these hallucinations before they reach end users.
 
-### Manual
+## The Solution
 
-```bash
-pip install -r requirements.txt
-python -m spacy download en_core_web_sm
-```
+**Hallucination Guard** is a Python toolkit that:
 
-### Development
+1. **Extracts** factual claims from any text using NLP
+2. **Verifies** each claim against Wikipedia + semantic similarity
+3. **Scores** overall hallucination risk on a `0.0 – 1.0` scale
+4. **Highlights** unsupported claims in the original text
 
-```bash
-make dev   # installs in editable mode with dev extras
-```
-
-### Docker
-
-```bash
-docker compose up -d        # build + run on port 8000
-curl http://localhost:8000/health
-```
+Use it as a **Python library**, a **CLI tool**, or a **REST API**.
 
 ---
 
-## Usage
+## Features
 
-### 1. CLI Tool
+- **Claim Extraction** — spaCy-powered NLP pipeline identifies factual statements
+- **Fact Verification** — Wikipedia API + sentence-transformer semantic matching
+- **Risk Scoring** — Weighted formula combining claim failure rate, confidence, and severity
+- **Text Highlighting** — Plain-text markers (`⚠[…]⚠`) + colorized Rich CLI output
+- **REST API** — FastAPI server with `POST /detect` endpoint
+- **CLI** — One-command analysis with formatted tables and color output
+- **Python SDK** — Three lines of code to integrate into any pipeline
+- **Configurable** — Environment variables or constructor arguments
+- **Containerized** — Docker + docker-compose for one-command deployment
+- **CI/CD** — GitHub Actions pipeline (lint, typecheck, test, Docker build)
+
+---
+
+## Demo
+
+### CLI
 
 ```bash
-# Direct text input
-python cli.py "The Eiffel Tower is located in Berlin and was built in 1920."
-
-# From a file
-python cli.py --file article.txt
-
-# Pipe from stdin
-echo "Python was created by Guido van Rossum in 1991." | python cli.py
-
-# Verbose mode
-python cli.py -v "Some AI-generated text here."
+$ python cli.py "The Eiffel Tower is located in Berlin and was built in 1920."
 ```
 
-**Sample CLI Output:**
-
 ```
-╭──────────── Hallucination Guard ────────────╮
-│     Hallucination Risk: 65.00%              │
-╰──────────── confidence 35.00% ──────────────╯
+╭─────────────────── Hallucination Guard ───────────────────╮
+│          Hallucination Risk: 72.00%                       │
+╰─────────────────── confidence 28.00% ────────────────────╯
   Total claims   : 2
-  Supported      : 1
-  Unsupported    : 1
-  Avg similarity : 0.3200
+  Supported      : 0
+  Unsupported    : 2
+  Avg similarity : 0.2100
 
 Highlighted Text
-The ⚠[Eiffel Tower is located in Berlin and was built in 1920.]⚠
+⚠[The Eiffel Tower is located in Berlin and was built in 1920.]⚠
 
-┏━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━┓
-┃ #  ┃ Claim                          ┃ Confidence ┃ Evidence         ┃
-┡━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━┩
-│ 1  │ The Eiffel Tower is located …  │ 0.2100     │ The Eiffel Tower │
-│    │                                │            │ is a wrought-…   │
-└────┴────────────────────────────────┴────────────┴──────────────────┘
+┏━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ #  ┃ Claim                                       ┃ Confidence ┃ Evidence                       ┃
+┡━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ 1  │ The Eiffel Tower is located in Berlin and   │     0.2100 │ The Eiffel Tower is a wrought- │
+│    │ was built in 1920.                           │            │ iron lattice tower on the      │
+│    │                                              │            │ Champ de Mars in Paris, France │
+└────┴──────────────────────────────────────────────┴────────────┴────────────────────────────────┘
 ```
 
-### 2. REST API
-
-Start the server:
+### API
 
 ```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000
-```
-
-#### `GET /health`
-
-```bash
-curl http://localhost:8000/health
-```
-
-```json
-{ "status": "ok", "version": "0.1.0" }
-```
-
-#### `POST /detect`
-
-```bash
-curl -X POST http://localhost:8000/detect \
-  -H "Content-Type: application/json" \
-  -d '{"text": "The Great Wall of China was built in 1995 by NASA."}'
+$ curl -X POST http://localhost:8000/detect \
+    -H "Content-Type: application/json" \
+    -d '{"text": "The Great Wall of China was built in 1995 by NASA."}'
 ```
 
 ```json
@@ -205,116 +107,242 @@ curl -X POST http://localhost:8000/detect \
 }
 ```
 
-### 3. Python SDK
+### Python SDK
 
 ```python
 from app.detector import HallucinationDetector
 
 detector = HallucinationDetector()
+result = detector.detect("Albert Einstein invented the telephone in 1876.")
 
-result = detector.detect(
-    "Albert Einstein invented the telephone in 1876."
+print(result.hallucination_risk)   # 0.68
+print(result.flagged_claims)       # [{"claim": "...", "confidence": 0.12, ...}]
+print(result.highlighted_text)     # "⚠[Albert Einstein invented …]⚠"
+```
+
+---
+
+## Installation
+
+### Quick Start
+
+```bash
+git clone https://github.com/chumarjamil/hallucination-guard.git
+cd hallucination-guard
+python -m venv .venv
+source .venv/bin/activate
+make install
+```
+
+### Manual
+
+```bash
+pip install -r requirements.txt
+python -m spacy download en_core_web_sm
+```
+
+### Docker
+
+```bash
+docker compose up -d
+curl http://localhost:8000/health
+# {"status": "ok", "version": "0.1.0"}
+```
+
+---
+
+## Usage
+
+### CLI
+
+```bash
+# Inline text
+python cli.py "The Eiffel Tower is located in Berlin."
+
+# From file
+python cli.py --file article.txt
+
+# Pipe from stdin
+echo "Python was invented by mass of Guido." | python cli.py
+
+# Verbose logging
+python cli.py -v "Some AI text here."
+```
+
+### REST API
+
+```bash
+# Start server
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+# Health check
+curl http://localhost:8000/health
+
+# Detect hallucinations
+curl -X POST http://localhost:8000/detect \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Your AI-generated text here."}'
+```
+
+### Python SDK
+
+```python
+from app.detector import HallucinationDetector
+
+detector = HallucinationDetector(
+    spacy_model="en_core_web_sm",
+    transformer_model="all-MiniLM-L6-v2",
+    wiki_lang="en",
 )
 
-print(f"Risk:  {result.hallucination_risk}")
-print(f"Flagged claims: {len(result.flagged_claims)}")
+result = detector.detect("Some AI-generated text.")
 
-for fc in result.flagged_claims:
-    print(f"  - {fc['claim']}  (confidence: {fc['confidence']})")
+print(result.hallucination_risk)    # float 0.0–1.0
+print(result.confidence)            # float 0.0–1.0
+print(result.flagged_claims)        # list of dicts
+print(result.highlighted_text)      # str with ⚠[…]⚠ markers
+```
+
+---
+
+## Architecture
+
+```
+┌──────────────────────────────────────────────────────────┐
+│                    Hallucination Guard                    │
+├───────────────┬───────────────┬───────────────┬──────────┤
+│   CLI (Rich)  │   REST API    │  Python SDK   │          │
+│   cli.py      │   FastAPI     │  detector.py  │          │
+├───────────────┴───────┬───────┴───────────────┘          │
+│                       │                                   │
+│           ┌───────────▼───────────┐                      │
+│           │    Detector Engine    │  app/detector.py      │
+│           └──┬────────┬────────┬─┘                       │
+│              │        │        │                          │
+│     ┌────────▼─┐  ┌───▼────┐  ┌▼──────────┐             │
+│     │  Claims  │  │ Verify │  │  Scorer   │             │
+│     │  Extract │  │ Engine │  │           │             │
+│     │  (spaCy) │  │ (Wiki  │  │  Risk     │             │
+│     │          │  │ +SBERT)│  │  Compute  │             │
+│     └──────────┘  └────────┘  └─────┬─────┘             │
+│                                     │                    │
+│                        ┌────────────▼────────────┐       │
+│                        │   Highlight Engine      │       │
+│                        │   (plain + Rich CLI)    │       │
+│                        └─────────────────────────┘       │
+└──────────────────────────────────────────────────────────┘
+```
+
+### Project Structure
+
+```
+.
+├── app/
+│   ├── __init__.py          # Package metadata
+│   ├── main.py              # FastAPI REST API server
+│   ├── detector.py          # Orchestration layer (SDK entry-point)
+│   ├── claims.py            # Claim extraction engine (spaCy NLP)
+│   ├── verifier.py          # Fact verification (Wikipedia + SBERT)
+│   ├── scorer.py            # Hallucination risk scoring
+│   ├── highlight.py         # Text highlighting (plain + Rich)
+│   └── config.py            # Centralised settings (env vars)
+├── tests/
+│   ├── test_claims.py       # Claim extraction tests
+│   ├── test_verifier.py     # Verification engine tests
+│   ├── test_scorer.py       # Risk scoring tests
+│   ├── test_highlight.py    # Highlighting tests
+│   ├── test_detector.py     # Integration tests
+│   ├── test_api.py          # FastAPI endpoint tests
+│   └── sample_cases.json    # Sample hallucination test data
+├── examples/
+│   ├── basic_usage.py       # SDK usage examples
+│   └── api_client.py        # REST API client example
+├── docs/
+│   └── ARCHITECTURE.md      # Detailed architecture docs
+├── .github/
+│   ├── workflows/
+│   │   └── ci.yml           # CI pipeline (lint, test, Docker)
+│   └── ISSUE_TEMPLATE/
+│       ├── bug_report.md    # Bug report template
+│       └── feature_request.md  # Feature request template
+├── cli.py                   # CLI interface (Click + Rich)
+├── pyproject.toml           # Packaging & tool config
+├── requirements.txt         # Pinned dependencies
+├── Dockerfile               # Production container
+├── docker-compose.yml       # One-command deployment
+├── Makefile                 # Dev task automation
+├── CONTRIBUTING.md          # Contribution guide
+├── LICENSE                  # MIT
+└── README.md
 ```
 
 ---
 
 ## Configuration
 
-All settings can be passed programmatically **or** via environment variables:
+All settings via environment variables or constructor arguments:
 
-| Env Variable                            | Default            | Description                                 |
-| --------------------------------------- | ------------------ | ------------------------------------------- |
-| `HALLUCINATION_GUARD_SPACY_MODEL`       | `en_core_web_sm`   | spaCy language model                        |
-| `HALLUCINATION_GUARD_TRANSFORMER_MODEL` | `all-MiniLM-L6-v2` | Sentence-transformer model                  |
-| `HALLUCINATION_GUARD_WIKI_LANG`         | `en`               | Wikipedia language edition                  |
-| `HALLUCINATION_GUARD_SUPPORT_THRESHOLD` | `0.45`             | Min similarity to mark a claim as supported |
-| `HALLUCINATION_GUARD_HOST`              | `0.0.0.0`          | API server bind address                     |
-| `HALLUCINATION_GUARD_PORT`              | `8000`             | API server port                             |
-| `HALLUCINATION_GUARD_LOG_LEVEL`         | `INFO`             | Logging level                               |
-
-Or pass directly to the constructor:
-
-```python
-detector = HallucinationDetector(
-    spacy_model="en_core_web_lg",
-    transformer_model="all-mpnet-base-v2",
-    wiki_lang="en",
-)
-```
+| Environment Variable | Default | Description |
+| --- | --- | --- |
+| `HALLUCINATION_GUARD_SPACY_MODEL` | `en_core_web_sm` | spaCy language model |
+| `HALLUCINATION_GUARD_TRANSFORMER_MODEL` | `all-MiniLM-L6-v2` | Sentence-transformer model |
+| `HALLUCINATION_GUARD_WIKI_LANG` | `en` | Wikipedia language edition |
+| `HALLUCINATION_GUARD_SUPPORT_THRESHOLD` | `0.45` | Min similarity for supported |
+| `HALLUCINATION_GUARD_HOST` | `0.0.0.0` | API bind address |
+| `HALLUCINATION_GUARD_PORT` | `8000` | API port |
+| `HALLUCINATION_GUARD_LOG_LEVEL` | `INFO` | Logging level |
 
 ---
 
 ## How It Works
 
-1. **Claim Extraction** — spaCy NLP parses the text, identifies sentences with factual indicators (verbs like *is*, *founded*, *invented*) or named entities, and extracts structured claims.
+1. **Claim Extraction** — spaCy NLP parses the input text. Sentences containing factual indicators (*is*, *founded*, *invented*, *born*, etc.) or named entities are extracted as structured claims with subject-verb-object triples.
 
-2. **Fact Verification** — Each claim is queried against Wikipedia. The retrieved evidence is compared to the claim using a sentence-transformer model (`all-MiniLM-L6-v2`) that produces a cosine-similarity confidence score.
+2. **Fact Verification** — Each claim generates search queries against Wikipedia. Retrieved evidence passages are compared to the claim text using a sentence-transformer model (`all-MiniLM-L6-v2`), producing a cosine-similarity confidence score.
 
-3. **Risk Scoring** — A weighted formula combines the unsupported-claim ratio, inverse confidence, and a non-linear severity penalty into a single `0.0 – 1.0` hallucination risk score.
+3. **Risk Scoring** — A weighted formula combines three signals:
+   - **Unsupported ratio** (50%) — fraction of claims that failed verification
+   - **Inverse confidence** (35%) — average `(1 − similarity)` across all claims
+   - **Severity penalty** (15%) — non-linear bonus when >50% of claims fail
 
-4. **Highlighting** — Unsupported claims are marked in the original text: plain-text markers (`⚠[…]⚠`) for machine consumption, and **bold red** via Rich for CLI output.
+4. **Highlighting** — Unsupported claims are wrapped with `⚠[…]⚠` markers in the output text. The CLI renders these as **bold red** via Rich.
 
 ---
 
 ## Roadmap
 
-- [ ] **LLM-based claim extraction** — GPT / local LLM fallback for complex sentences
-- [ ] **Multi-source verification** — Google Knowledge Graph, Wikidata, PubMed
-- [ ] **Async pipeline** — concurrent verification for faster throughput
-- [ ] **Caching layer** — Redis / SQLite cache for Wikipedia + embeddings
-- [x] **Docker image** — one-command deployment
-- [ ] **Web UI dashboard** — browser-based analysis interface
-- [ ] **Batch processing** — analyse multiple documents in one call
-- [ ] **Custom knowledge bases** — plug in your own ground-truth corpus
-- [x] **CI / CD integration** — GitHub Action for automated content checks
-- [ ] **PyPI package** — `pip install hallucination-guard`
+- [ ] LLM-based claim extraction (GPT / local LLM fallback)
+- [ ] Multi-source verification (Google Knowledge Graph, Wikidata, PubMed)
+- [ ] Async pipeline for concurrent verification
+- [ ] Caching layer (Redis / SQLite for Wikipedia + embeddings)
+- [x] Docker image with one-command deployment
+- [ ] Web UI dashboard
+- [ ] Batch processing (multiple documents per call)
+- [ ] Custom knowledge bases (plug in your own corpus)
+- [x] CI/CD integration (GitHub Actions)
+- [ ] PyPI package (`pip install hallucination-guard`)
+- [ ] Webhook notifications for flagged content
+- [ ] Confidence calibration with human-labeled datasets
 
 ---
 
 ## Contributing
 
-Contributions are welcome! Please follow these steps:
+We welcome contributions! Please read our [Contributing Guide](CONTRIBUTING.md) for details on:
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/my-feature`
-3. Write tests for new functionality
-4. Ensure all tests pass
-5. Submit a pull request with a clear description
+- Setting up the development environment
+- Running tests and linting
+- Submitting pull requests
+- Code style expectations
 
-### Development Setup
+### Quick Start for Contributors
 
 ```bash
-git clone https://github.com/your-org/hallucination-guard.git
+git clone https://github.com/chumarjamil/hallucination-guard.git
 cd hallucination-guard
-make dev            # editable install + dev dependencies + pre-commit
+make dev    # editable install + dev deps + pre-commit hooks
+make test   # run full test suite
 ```
-
-### Useful Commands
-
-```bash
-make test           # run test suite with coverage
-make lint           # ruff linter
-make typecheck      # mypy type checking
-make format         # auto-format code
-make serve          # start dev server with hot-reload
-make docker         # build Docker image
-make clean          # remove caches and build artifacts
-```
-
-### Code Style
-
-- Python 3.10+
-- Type hints on all public functions
-- `logging` over `print`
-- Keep modules focused and testable
-- Pre-commit hooks enforced via `ruff` + `mypy`
 
 ---
 
@@ -325,5 +353,6 @@ MIT License — see [LICENSE](LICENSE) for details.
 ---
 
 <p align="center">
-  Built with ❤️ for developers who care about factual accuracy.
+  <strong>Built for developers who ship AI responsibly.</strong><br>
+  <sub>If this project helps you, consider giving it a ⭐</sub>
 </p>
