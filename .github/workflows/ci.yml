@@ -25,10 +25,10 @@ jobs:
         run: pip install ruff
 
       - name: Check linting
-        run: ruff check app/ tests/ cli.py
+        run: ruff check src/ tests/
 
       - name: Check formatting
-        run: ruff format --check app/ tests/ cli.py
+        run: ruff format --check src/ tests/
 
   typecheck:
     name: Type Check
@@ -51,10 +51,11 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
+          pip install -e .
           pip install mypy
 
       - name: Run mypy
-        run: mypy app/ --ignore-missing-imports
+        run: mypy src/ --ignore-missing-imports
 
   test:
     name: Test (Python ${{ matrix.python-version }})
@@ -81,11 +82,12 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
+          pip install -e .
           pip install pytest pytest-cov httpx
           python -m spacy download en_core_web_sm
 
       - name: Run tests
-        run: pytest tests/ -v --tb=short --cov=app --cov-report=term-missing
+        run: pytest tests/ -v --tb=short --cov=src/hallucination_guard --cov-report=term-missing
 
   docker:
     name: Docker Build

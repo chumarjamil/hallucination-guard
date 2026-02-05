@@ -1,4 +1,4 @@
-"""Claim Extraction Engine — extracts factual claims from raw text."""
+"""Claim Extraction Engine — extracts factual claims from raw text using NLP."""
 
 from __future__ import annotations
 
@@ -30,64 +30,31 @@ class Claim:
 
 
 # ---------------------------------------------------------------------------
-# Extraction helpers
+# Heuristics
 # ---------------------------------------------------------------------------
 
-_FACTUAL_INDICATORS = {
-    "is",
-    "was",
-    "are",
-    "were",
-    "has",
-    "had",
-    "founded",
-    "invented",
-    "discovered",
-    "created",
-    "published",
-    "born",
-    "died",
-    "located",
-    "contains",
-    "produces",
-    "consists",
-    "became",
-    "established",
-    "developed",
-    "introduced",
-    "launched",
-    "released",
-    "built",
-    "designed",
-    "won",
-    "received",
-    "achieved",
-    "holds",
-    "measures",
-    "weighs",
-    "costs",
-    "earned",
-    "scored",
-    "ranked",
-    "reached",
-    "surpassed",
-    "exceeded",
-}
+_FACTUAL_INDICATORS = frozenset({
+    "is", "was", "are", "were", "has", "had",
+    "founded", "invented", "discovered", "created", "published",
+    "born", "died", "located", "contains", "produces", "consists",
+    "became", "established", "developed", "introduced", "launched",
+    "released", "built", "designed", "won", "received", "achieved",
+    "holds", "measures", "weighs", "costs", "earned", "scored",
+    "ranked", "reached", "surpassed", "exceeded", "composed",
+    "flows", "empties", "borders", "spans", "covers",
+})
 
 
 def _looks_factual(sent_text: str) -> bool:
-    """Heuristic: does the sentence contain a factual-sounding verb?"""
     tokens = sent_text.lower().split()
     return bool(_FACTUAL_INDICATORS & set(tokens))
 
 
 def _has_named_entity(sent, min_entities: int = 1) -> bool:
-    """Check whether a spaCy sentence span contains named entities."""
     return len(sent.ents) >= min_entities
 
 
 def _extract_svo(sent) -> tuple[Optional[str], Optional[str], Optional[str]]:
-    """Rudimentary SVO extraction from a spaCy sentence."""
     subject = predicate = obj = None
     for token in sent:
         if "subj" in token.dep_:
@@ -100,7 +67,7 @@ def _extract_svo(sent) -> tuple[Optional[str], Optional[str], Optional[str]]:
 
 
 # ---------------------------------------------------------------------------
-# Main extractor
+# Extractor
 # ---------------------------------------------------------------------------
 
 class ClaimExtractor:
@@ -111,13 +78,9 @@ class ClaimExtractor:
             self.nlp = spacy.load(model_name)
             logger.info("Loaded spaCy model '%s'", model_name)
         except OSError:
-            logger.warning(
-                "spaCy model '%s' not found — downloading …", model_name
-            )
+            logger.warning("spaCy model '%s' not found — downloading …", model_name)
             spacy.cli.download(model_name)  # type: ignore[attr-defined]
             self.nlp = spacy.load(model_name)
-
-    # ---- public API -------------------------------------------------------
 
     def extract(self, text: str) -> List[Claim]:
         """Return a list of factual :class:`Claim` objects from *text*."""
@@ -129,7 +92,6 @@ class ClaimExtractor:
             if not sent_text:
                 continue
 
-            # Keep sentences that look factual OR contain named entities
             if _looks_factual(sent_text) or _has_named_entity(sent):
                 subj, pred, obj = _extract_svo(sent)
                 claim = Claim(

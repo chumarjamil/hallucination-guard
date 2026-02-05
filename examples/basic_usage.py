@@ -11,7 +11,7 @@ Run:
 
 from __future__ import annotations
 
-from app.detector import HallucinationDetector
+from hallucination_guard import HallucinationGuard
 
 SEPARATOR = "=" * 64
 
@@ -73,10 +73,10 @@ def print_result(label: str, result) -> None:
 def main() -> None:
     print("\n🛡  Hallucination Guard — SDK Demo\n")
 
-    detector = HallucinationDetector()
+    guard = HallucinationGuard()
 
     for sample in SAMPLES:
-        result = detector.detect(sample["text"])
+        result = guard.detect(sample["text"])
         print_result(sample["label"], result)
 
 

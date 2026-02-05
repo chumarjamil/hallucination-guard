@@ -1,15 +1,11 @@
-"""Unit tests for the Claim Extraction Engine."""
+"""Tests for the Claim Extraction Engine."""
 
 from __future__ import annotations
 
 import pytest
 
-from app.claims import Claim, ClaimExtractor, _looks_factual, _has_named_entity
+from hallucination_guard.core.claims import Claim, ClaimExtractor, _looks_factual
 
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
 
 class TestLooksFactual:
     def test_factual_sentence(self):
@@ -25,10 +21,6 @@ class TestLooksFactual:
         assert not _looks_factual("")
 
 
-# ---------------------------------------------------------------------------
-# Claim dataclass
-# ---------------------------------------------------------------------------
-
 class TestClaim:
     def test_str_representation(self):
         c = Claim(text="Python is a programming language.")
@@ -42,10 +34,6 @@ class TestClaim:
         c = Claim(text="test")
         assert c.metadata == {}
 
-
-# ---------------------------------------------------------------------------
-# ClaimExtractor
-# ---------------------------------------------------------------------------
 
 class TestClaimExtractor:
     @pytest.fixture(scope="class")
@@ -68,7 +56,6 @@ class TestClaimExtractor:
 
     def test_no_factual_content(self, extractor: ClaimExtractor):
         claims = extractor.extract("Hello! How are you? Great to meet you.")
-        # May or may not extract — but should not crash
         assert isinstance(claims, list)
 
     def test_source_spans_set(self, extractor: ClaimExtractor):

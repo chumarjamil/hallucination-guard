@@ -24,12 +24,15 @@ python -m venv .venv
 source .venv/bin/activate   # macOS / Linux
 # .venv\Scripts\activate    # Windows
 
-# Install in development mode with all dev dependencies
+# Install in development mode (editable + dev extras)
 make dev
 
 # Or manually:
 pip install -e ".[dev]"
 python -m spacy download en_core_web_sm
+
+# Verify the CLI works
+hallucination-guard version
 ```
 
 ---
@@ -117,30 +120,38 @@ pre-commit run --all-files
 ## Project Structure
 
 ```
-app/             # Core library code
-  claims.py      # Claim extraction engine
-  verifier.py    # Fact verification engine
-  scorer.py      # Risk scoring
-  highlight.py   # Text highlighting
-  detector.py    # Orchestration (SDK entry-point)
-  main.py        # FastAPI server
-  config.py      # Configuration / settings
+src/hallucination_guard/
+  __init__.py    # Public API (detect, score, explain)
+  sdk.py         # SDK convenience functions
+  cli.py         # Typer CLI (check, file, batch, api)
+  core/
+    detector.py  # Pipeline orchestration
+    claims.py    # Claim extraction (spaCy)
+    verifier.py  # Fact verification (Wikipedia + SBERT)
+    scorer.py    # Risk scoring
+    explainer.py # Explanation generation
+    highlight.py # Text highlighting
+  api/
+    server.py    # FastAPI REST server
+  utils/
+    config.py    # Env-based configuration
 
 tests/           # Test suite
-examples/        # Usage examples
-docs/            # Documentation
-cli.py           # CLI entry-point
+examples/        # Integration examples
+docs/            # Architecture documentation
 ```
 
 ### Where to Add Code
 
-| Type of change | Where |
-| --- | --- |
-| New verification source | `app/verifier.py` |
-| New scoring method | `app/scorer.py` |
-| New API endpoint | `app/main.py` |
-| New CLI command/option | `cli.py` |
-| Configuration option | `app/config.py` |
+| Type of change          | Where                                       |
+| ----------------------- | ------------------------------------------- |
+| New verification source | `src/hallucination_guard/core/verifier.py`  |
+| New scoring method      | `src/hallucination_guard/core/scorer.py`    |
+| New explanation logic   | `src/hallucination_guard/core/explainer.py` |
+| New API endpoint        | `src/hallucination_guard/api/server.py`     |
+| New CLI command         | `src/hallucination_guard/cli.py`            |
+| New SDK function        | `src/hallucination_guard/sdk.py`            |
+| Configuration option    | `src/hallucination_guard/utils/config.py`   |
 
 ---
 

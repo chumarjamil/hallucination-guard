@@ -6,7 +6,7 @@ import logging
 from dataclasses import dataclass
 from typing import List
 
-from app.verifier import VerificationResult
+from hallucination_guard.core.verifier import VerificationResult
 
 logger = logging.getLogger(__name__)
 
@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 class RiskReport:
     """Aggregated hallucination risk report."""
 
-    hallucination_risk: float  # 0.0 (safe) → 1.0 (high risk)
-    confidence: float          # overall confidence that the text is factual
+    hallucination_risk: float
+    confidence: float
     total_claims: int
     supported_claims: int
     unsupported_claims: int
@@ -28,26 +28,23 @@ class RiskReport:
 
 
 # ---------------------------------------------------------------------------
-# Scoring engine
+# Scorer
 # ---------------------------------------------------------------------------
 
 class HallucinationScorer:
-    """Compute a hallucination risk score from verification results.
+    """Compute hallucination risk score from verification results.
 
-    The score is a weighted combination of:
-    - **unsupported ratio**: fraction of claims that failed verification
-    - **inverse confidence**: average (1 − confidence) across claims
-    - **severity bonus**: extra penalty when many claims are unsupported
+    Score = weighted combination of:
+    - unsupported ratio (50%)
+    - inverse confidence (35%)
+    - severity penalty (15%)
     """
 
     WEIGHT_UNSUPPORTED_RATIO: float = 0.50
     WEIGHT_INV_CONFIDENCE: float = 0.35
     WEIGHT_SEVERITY: float = 0.15
 
-    # ---- public API -------------------------------------------------------
-
     def score(self, results: List[VerificationResult]) -> RiskReport:
-        """Return a :class:`RiskReport` for the given verification results."""
         total = len(results)
 
         if total == 0:
@@ -65,11 +62,9 @@ class HallucinationScorer:
         unsupported = total - supported
         avg_sim = sum(r.similarity_score for r in results) / total
 
-        # --- component scores ---
         unsupported_ratio = unsupported / total
         inv_confidence = 1.0 - avg_sim
 
-        # severity: non-linear penalty when > 50 % of claims fail
         if unsupported_ratio > 0.5:
             severity = min(1.0, unsupported_ratio * 1.5)
         else:
@@ -93,7 +88,5 @@ class HallucinationScorer:
             details=results,
         )
 
-        logger.info(
-            "Risk score: %.4f  (supported=%d / %d)", risk, supported, total
-        )
+        logger.info("Risk score: %.4f (supported=%d/%d)", risk, supported, total)
         return report

@@ -9,7 +9,7 @@ from typing import List, Optional
 import wikipediaapi
 from sentence_transformers import SentenceTransformer, util
 
-from app.claims import Claim
+from hallucination_guard.core.claims import Claim
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ class VerificationResult:
 
 
 # ---------------------------------------------------------------------------
-# Wikipedia evidence fetcher
+# Wikipedia source
 # ---------------------------------------------------------------------------
 
 class WikipediaSource:
@@ -39,15 +39,14 @@ class WikipediaSource:
 
     def __init__(self, language: str = "en") -> None:
         self.wiki = wikipediaapi.Wikipedia(
-            user_agent="HallucinationGuard/0.1 (https://github.com/hallucination-guard)",
+            user_agent="HallucinationGuard/0.2 (https://github.com/chumarjamil/hallucination-guard)",
             language=language,
         )
 
     def search(self, query: str, max_chars: int = 2000) -> Optional[str]:
-        """Return the summary text for *query*, or ``None``."""
         page = self.wiki.page(query)
         if not page.exists():
-            logger.debug("Wikipedia page not found for query: %s", query)
+            logger.debug("Wikipedia page not found: %s", query)
             return None
         text = page.summary[:max_chars] if page.summary else None
         logger.debug("Wikipedia hit for '%s' (%d chars)", query, len(text or ""))
@@ -55,18 +54,17 @@ class WikipediaSource:
 
 
 # ---------------------------------------------------------------------------
-# Semantic similarity scorer
+# Semantic scorer
 # ---------------------------------------------------------------------------
 
 class SemanticScorer:
-    """Compute semantic similarity between a claim and evidence."""
+    """Compute semantic similarity between claim and evidence."""
 
     def __init__(self, model_name: str = "all-MiniLM-L6-v2") -> None:
-        logger.info("Loading sentence-transformer model '%s' …", model_name)
+        logger.info("Loading sentence-transformer '%s' …", model_name)
         self.model = SentenceTransformer(model_name)
 
     def score(self, claim_text: str, evidence_text: str) -> float:
-        """Return cosine similarity in ``[0, 1]``."""
         embeddings = self.model.encode(
             [claim_text, evidence_text], convert_to_tensor=True
         )
@@ -75,11 +73,11 @@ class SemanticScorer:
 
 
 # ---------------------------------------------------------------------------
-# Main verifier
+# Verifier
 # ---------------------------------------------------------------------------
 
 class FactVerifier:
-    """Verify a list of claims against Wikipedia + semantic similarity."""
+    """Verify claims against Wikipedia + semantic similarity."""
 
     SUPPORT_THRESHOLD: float = 0.45
 
@@ -91,14 +89,10 @@ class FactVerifier:
         self.wiki = WikipediaSource(language=wiki_lang)
         self.scorer = SemanticScorer(model_name=transformer_model)
 
-    # ---- helpers ----------------------------------------------------------
-
     def _search_queries(self, claim: Claim) -> List[str]:
-        """Generate Wikipedia search queries from a claim."""
         queries: List[str] = []
         if claim.subject:
             queries.append(claim.subject)
-        # Also try named-entity strings embedded in the claim text
         words = claim.text.split()
         for w in words:
             if w[0:1].isupper() and len(w) > 2 and w.lower() not in {
@@ -107,7 +101,6 @@ class FactVerifier:
                 queries.append(w)
         if not queries:
             queries.append(claim.text[:80])
-        # deduplicate while preserving order
         seen: set[str] = set()
         unique: List[str] = []
         for q in queries:
@@ -116,10 +109,7 @@ class FactVerifier:
                 unique.append(q)
         return unique
 
-    # ---- public API -------------------------------------------------------
-
     def verify(self, claims: List[Claim]) -> List[VerificationResult]:
-        """Verify each claim and return :class:`VerificationResult` objects."""
         results: List[VerificationResult] = []
 
         for claim in claims:
@@ -149,9 +139,7 @@ class FactVerifier:
             results.append(result)
             logger.info(
                 "Claim verified — supported=%s  confidence=%.2f  claim='%s'",
-                is_supported,
-                best_score,
-                claim.text[:60],
+                is_supported, best_score, claim.text[:60],
             )
 
         return results

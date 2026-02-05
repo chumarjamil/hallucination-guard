@@ -10,30 +10,35 @@ Detailed technical documentation for Hallucination Guard.
 Input Text
     │
     ▼
-┌─────────────────┐
-│ Claim Extractor  │  app/claims.py
-│ (spaCy NLP)      │
-└────────┬────────┘
+┌──────────────────┐
+│ Claim Extractor   │  core/claims.py
+│ (spaCy NLP)       │
+└────────┬─────────┘
          │  List[Claim]
          ▼
-┌─────────────────┐
-│ Fact Verifier    │  app/verifier.py
-│ (Wikipedia +     │
-│  SBERT)          │
-└────────┬────────┘
+┌──────────────────┐
+│ Fact Verifier     │  core/verifier.py
+│ (Wikipedia +      │
+│  SBERT)           │
+└────────┬─────────┘
          │  List[VerificationResult]
          ▼
-┌─────────────────┐
-│ Risk Scorer      │  app/scorer.py
-│ (weighted        │
-│  formula)        │
-└────────┬────────┘
+┌──────────────────┐
+│ Risk Scorer       │  core/scorer.py
+│ (weighted formula)│
+└────────┬─────────┘
          │  RiskReport
          ▼
-┌─────────────────┐
-│ Highlighter      │  app/highlight.py
-│ (plain + Rich)   │
-└────────┬────────┘
+┌──────────────────┐
+│ Explainer         │  core/explainer.py
+│ (human-readable)  │
+└────────┬─────────┘
+         │  List[Explanation]
+         ▼
+┌──────────────────┐
+│ Highlighter       │  core/highlight.py
+│ (plain + Rich)    │
+└────────┬─────────┘
          │
          ▼
     DetectionResult
@@ -43,7 +48,7 @@ Input Text
 
 ## Module Details
 
-### 1. Claim Extraction (`app/claims.py`)
+### 1. Claim Extraction (`core/claims.py`)
 
 **Input**: Raw text string
 **Output**: `List[Claim]`
@@ -56,7 +61,7 @@ The extractor uses spaCy to:
 
 A sentence is kept as a claim if it contains a factual indicator verb **or** at least one named entity.
 
-### 2. Fact Verification (`app/verifier.py`)
+### 2. Fact Verification (`core/verifier.py`)
 
 **Input**: `List[Claim]`
 **Output**: `List[VerificationResult]`
@@ -66,9 +71,9 @@ For each claim:
 2. Fetch Wikipedia article summaries for each query
 3. Compute cosine similarity between claim text and evidence using `sentence-transformers` (`all-MiniLM-L6-v2`)
 4. Keep the best-scoring evidence passage
-5. Mark the claim as **supported** if similarity ≥ threshold (default: `0.45`)
+5. Mark the claim as **supported** if similarity >= threshold (default: `0.45`)
 
-### 3. Risk Scoring (`app/scorer.py`)
+### 3. Risk Scoring (`core/scorer.py`)
 
 **Input**: `List[VerificationResult]`
 **Output**: `RiskReport`
@@ -86,7 +91,19 @@ Where:
 - `avg_similarity` = mean similarity score across all claims
 - `severity_penalty` = non-linear penalty when >50% of claims fail (capped at 1.0)
 
-### 4. Highlighting (`app/highlight.py`)
+### 4. Explanation Generation (`core/explainer.py`)
+
+**Input**: `List[VerificationResult]`
+**Output**: `List[Explanation]`
+
+Generates human-readable explanations for each claim:
+- Supported claims get a "factually supported" message
+- Unsupported claims with evidence get a "could not be verified" message with contradicting source
+- Unsupported claims without evidence get a "no supporting evidence found" message
+
+Each explanation includes a severity rating: **low**, **medium**, or **high**.
+
+### 5. Highlighting (`core/highlight.py`)
 
 **Input**: Original text + `RiskReport`
 **Output**: Highlighted text
@@ -95,27 +112,57 @@ Two output modes:
 - **Plain text**: Unsupported claims wrapped in `⚠[…]⚠` markers
 - **Rich CLI**: Bold red styling on unsupported claim spans using Rich library
 
-### 5. Detector (`app/detector.py`)
+### 6. Detector (`core/detector.py`)
 
-Orchestration layer that chains all four stages. This is the primary SDK entry-point.
+Orchestration layer that chains all five stages. Primary SDK entry-point.
 
 ```python
-detector = HallucinationDetector()
-result = detector.detect("Some text")
-# result.hallucination_risk  → float
-# result.flagged_claims      → list of dicts
-# result.highlighted_text    → str
+from hallucination_guard import HallucinationGuard
+
+guard = HallucinationGuard()
+result = guard.detect("Some text")
+# result.hallucinated          → bool
+# result.hallucination_risk    → float
+# result.flagged_claims        → list of dicts
+# result.explanations          → list of Explanation
+# result.highlighted_text      → str
+# result.explanation           → str (summary)
+# result.to_dict()             → dict (JSON-safe)
 ```
 
-### 6. API Server (`app/main.py`)
+### 7. SDK (`sdk.py`)
+
+Three convenience functions wrapping `HallucinationGuard`:
+
+```python
+from hallucination_guard import detect, score, explain
+
+result = detect("text")   # DetectionResult
+risk   = score("text")    # float
+info   = explain("text")  # dict
+```
+
+Uses a lazy singleton — the guard is created on first call and reused.
+
+### 8. CLI (`cli.py`)
+
+Typer-based CLI with four commands:
+- `check` — inline text analysis
+- `file` — analyse a text file
+- `batch` — batch-process a JSON array
+- `api` — start the REST API server
+
+Rich output with colored panels, tables, and per-claim explanations.
+
+### 9. API Server (`api/server.py`)
 
 FastAPI application with:
 - `GET /health` — readiness check
-- `POST /detect` — full detection pipeline
+- `POST /detect` — full detection pipeline with explanations
 
 Models are loaded once during application startup via the lifespan context manager.
 
-### 7. Configuration (`app/config.py`)
+### 10. Configuration (`utils/config.py`)
 
 Frozen dataclass reading from `HALLUCINATION_GUARD_*` environment variables with sensible defaults. All settings are documented in the README.
 
@@ -133,18 +180,22 @@ Frozen dataclass reading from `HALLUCINATION_GUARD_*` environment variables with
               └──────────┬──────────┘
                          │
               ┌──────────▼──────────┐
-              │  HallucinationDetector │
-              │  (detector.py)      │
-              └──┬─────┬─────┬──┬──┘
-                 │     │     │  │
-    ┌────────────▼┐ ┌──▼──┐ ┌▼──▼────┐
-    │ ClaimExtract│ │Fact │ │ Risk   │
-    │ or          │ │Veri │ │ Scorer │
-    │             │ │fier │ │        │
-    └─────────────┘ └──┬──┘ └───┬────┘
+              │  HallucinationGuard │
+              │  (core/detector.py) │
+              └──┬───┬───┬───┬───┬─┘
+                 │   │   │   │   │
+    ┌────────────▼┐ ┌▼───▼┐ ┌▼───▼──────┐
+    │ ClaimExtract│ │Fact │ │ Scorer    │
+    │ or          │ │Veri │ │           │
+    │             │ │fier │ │           │
+    └─────────────┘ └──┬──┘ └───┬───────┘
                        │        │
               ┌────────▼────────▼───┐
-              │   Highlighter       │
+              │     Explainer       │
+              └─────────┬───────────┘
+                        │
+              ┌─────────▼───────────┐
+              │     Highlighter     │
               └─────────┬───────────┘
                         │
               ┌─────────▼───────────┐
@@ -154,15 +205,42 @@ Frozen dataclass reading from `HALLUCINATION_GUARD_*` environment variables with
 
 ---
 
+## Package Structure
+
+```
+src/hallucination_guard/
+├── __init__.py         # Public API: detect, score, explain, HallucinationGuard
+├── sdk.py              # Convenience wrappers (lazy singleton)
+├── cli.py              # Typer CLI (check, file, batch, api, version)
+├── core/
+│   ├── detector.py     # Pipeline orchestration
+│   ├── claims.py       # Claim extraction (spaCy)
+│   ├── verifier.py     # Fact verification (Wikipedia + SBERT)
+│   ├── scorer.py       # Risk scoring
+│   ├── explainer.py    # Explanation generation
+│   └── highlight.py    # Text highlighting
+├── api/
+│   └── server.py       # FastAPI REST server
+└── utils/
+    └── config.py       # Env-based settings
+```
+
+---
+
 ## Key Design Decisions
 
-| Decision | Rationale |
-| --- | --- |
-| spaCy for NLP | Fast, well-maintained, no API key needed |
-| Wikipedia as source | Free, reliable, broad coverage |
-| sentence-transformers | Local inference, no API costs, good accuracy |
-| Weighted scoring formula | Tunable, interpretable, no black box |
-| Dataclasses over Pydantic (internal) | Lighter weight for internal data flow |
-| Pydantic for API schemas | Automatic validation, OpenAPI docs |
-| Rich for CLI | Professional output with minimal code |
-| Environment variable config | 12-factor app compliance, Docker-friendly |
+| Decision                    | Rationale                                          |
+| --------------------------- | -------------------------------------------------- |
+| `src/` layout               | Standard Python packaging, avoids import confusion |
+| Typer for CLI               | Modern, auto-generated help, type-safe             |
+| spaCy for NLP               | Fast, well-maintained, no API key needed           |
+| Wikipedia as source         | Free, reliable, broad coverage                     |
+| sentence-transformers       | Local inference, no API costs, good accuracy       |
+| Weighted scoring formula    | Tunable, interpretable, no black box               |
+| Explanation engine          | Human-readable output, severity ratings            |
+| Lazy SDK singleton          | Fast import, models loaded only when needed        |
+| Dataclasses (internal)      | Lighter weight for internal data flow              |
+| Pydantic (API schemas)      | Automatic validation, OpenAPI docs                 |
+| Rich for CLI output         | Professional output with minimal code              |
+| Environment variable config | 12-factor app compliance, Docker-friendly          |
+| `to_dict()` on result       | Easy JSON serialization for any consumer           |

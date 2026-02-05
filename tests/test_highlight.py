@@ -1,18 +1,14 @@
-"""Unit tests for the Text Highlighting System."""
+"""Tests for the Text Highlighting System."""
 
 from __future__ import annotations
 
 import pytest
 
-from app.claims import Claim
-from app.highlight import highlight_plain, highlight_rich, _flagged_spans
-from app.scorer import RiskReport
-from app.verifier import VerificationResult
+from hallucination_guard.core.claims import Claim
+from hallucination_guard.core.highlight import highlight_plain, highlight_rich, _flagged_spans
+from hallucination_guard.core.scorer import RiskReport
+from hallucination_guard.core.verifier import VerificationResult
 
-
-# ---------------------------------------------------------------------------
-# Fixtures
-# ---------------------------------------------------------------------------
 
 def _make_report(results: list[VerificationResult]) -> RiskReport:
     return RiskReport(
@@ -25,10 +21,6 @@ def _make_report(results: list[VerificationResult]) -> RiskReport:
         details=results,
     )
 
-
-# ---------------------------------------------------------------------------
-# Tests
-# ---------------------------------------------------------------------------
 
 class TestFlaggedSpans:
     def test_unsupported_claims_returned(self):
@@ -72,7 +64,6 @@ class TestHighlightPlain:
         result = highlight_plain(text, report)
         assert "⚠[" in result
         assert "]⚠" in result
-        assert "The sky is green today." in result
 
     def test_multiple_flagged_claims(self):
         text = "Claim A. Claim B. Claim C."

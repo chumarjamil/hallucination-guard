@@ -10,8 +10,7 @@ from dataclasses import dataclass, field
 class Settings:
     """Application-wide settings.
 
-    Every value can be overridden via the corresponding ``HALLUCINATION_GUARD_*``
-    environment variable.
+    Override via ``HALLUCINATION_GUARD_*`` environment variables.
     """
 
     # NLP / Models
@@ -19,9 +18,7 @@ class Settings:
         default_factory=lambda: os.getenv("HALLUCINATION_GUARD_SPACY_MODEL", "en_core_web_sm")
     )
     transformer_model: str = field(
-        default_factory=lambda: os.getenv(
-            "HALLUCINATION_GUARD_TRANSFORMER_MODEL", "all-MiniLM-L6-v2"
-        )
+        default_factory=lambda: os.getenv("HALLUCINATION_GUARD_TRANSFORMER_MODEL", "all-MiniLM-L6-v2")
     )
 
     # Wikipedia
@@ -31,9 +28,7 @@ class Settings:
 
     # Verification
     support_threshold: float = field(
-        default_factory=lambda: float(
-            os.getenv("HALLUCINATION_GUARD_SUPPORT_THRESHOLD", "0.45")
-        )
+        default_factory=lambda: float(os.getenv("HALLUCINATION_GUARD_SUPPORT_THRESHOLD", "0.45"))
     )
 
     # Server
@@ -51,5 +46,5 @@ class Settings:
 
 
 def get_settings() -> Settings:
-    """Return a fresh :class:`Settings` instance (reads env vars each time)."""
+    """Return a fresh Settings instance (reads env vars each call)."""
     return Settings()

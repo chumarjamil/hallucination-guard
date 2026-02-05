@@ -1,4 +1,4 @@
-.PHONY: install dev test lint typecheck format serve docker clean
+.PHONY: install dev test lint typecheck format serve demo docker docker-run docker-stop clean
 
 # ---------------------------------------------------------------------------
 # Setup
@@ -6,6 +6,7 @@
 
 install:
 	pip install -r requirements.txt
+	pip install -e .
 	python -m spacy download en_core_web_sm
 
 dev:
@@ -18,26 +19,26 @@ dev:
 # ---------------------------------------------------------------------------
 
 test:
-	pytest tests/ -v --tb=short --cov=app --cov-report=term-missing
+	pytest tests/ -v --tb=short --cov=src/hallucination_guard --cov-report=term-missing
 
 lint:
-	ruff check app/ tests/ cli.py
+	ruff check src/ tests/
 
 typecheck:
-	mypy app/ --ignore-missing-imports
+	mypy src/ --ignore-missing-imports
 
 format:
-	ruff format app/ tests/ cli.py
+	ruff format src/ tests/
 
 # ---------------------------------------------------------------------------
 # Run
 # ---------------------------------------------------------------------------
 
 serve:
-	uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+	hallucination-guard api --port 8000 --reload
 
-cli:
-	python cli.py "The Eiffel Tower is located in Berlin and was built in 1920."
+demo:
+	hallucination-guard check "The Eiffel Tower is located in Berlin and was built in 1920."
 
 # ---------------------------------------------------------------------------
 # Docker
