@@ -1,0 +1,111 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hallucination-guard"
+version = "0.1.0"
+description = "Production-ready AI Hallucination Detection for Developers"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "Hallucination Guard Contributors"},
+]
+keywords = ["ai", "hallucination", "detection", "nlp", "fact-checking"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "spacy>=3.7.0",
+    "wikipedia-api>=0.6.0",
+    "sentence-transformers>=2.2.0",
+    "fastapi>=0.104.0",
+    "uvicorn>=0.24.0",
+    "rich>=13.7.0",
+    "pydantic>=2.5.0",
+    "click>=8.1.0",
+    "torch>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-asyncio>=0.23.0",
+    "httpx>=0.25.0",
+    "ruff>=0.1.0",
+    "mypy>=1.7.0",
+    "pre-commit>=3.6.0",
+]
+
+[project.scripts]
+hallucination-check = "cli:main"
+
+[project.urls]
+Homepage = "https://github.com/your-org/hallucination-guard"
+Repository = "https://github.com/your-org/hallucination-guard"
+Issues = "https://github.com/your-org/hallucination-guard/issues"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+# ---------------------------------------------------------------------------
+# Ruff (linter + formatter)
+# ---------------------------------------------------------------------------
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "SIM", "RUF"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+# ---------------------------------------------------------------------------
+# Pytest
+# ---------------------------------------------------------------------------
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short --strict-markers"
+markers = [
+    "slow: marks tests that require network or heavy models",
+]
+
+# ---------------------------------------------------------------------------
+# Mypy
+# ---------------------------------------------------------------------------
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+
+[[tool.mypy.overrides]]
+module = ["wikipediaapi.*", "sentence_transformers.*", "spacy.*"]
+ignore_missing_imports = true
+
+# ---------------------------------------------------------------------------
+# Coverage
+# ---------------------------------------------------------------------------
+
+[tool.coverage.run]
+source = ["app"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 60

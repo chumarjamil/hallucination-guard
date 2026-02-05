@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  hallucination-guard:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - HALLUCINATION_GUARD_LOG_LEVEL=INFO
+      - HALLUCINATION_GUARD_HOST=0.0.0.0
+      - HALLUCINATION_GUARD_PORT=8000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
