@@ -9,10 +9,9 @@
 <h1 align="center">🛡 Hallucination Guard</h1>
 
 <p align="center">
-  <strong>The open-source standard for hallucination detection in AI-generated text.</strong><br>
-  <strong>Works with Python, Node.js, TypeScript — any stack.</strong><br><br>
-  <code>pip install hallucination-guard</code> · <code>npm install hallucination-guard</code><br><br>
-  Python SDK · Node.js SDK · Global CLI · REST API · LangChain / LlamaIndex Ready
+  <strong>The open-source standard for detecting and preventing hallucinations in AI systems.</strong><br><br>
+  CLI · SDK · API · Built for developers · Production-ready<br><br>
+  <code>pip install hallucination-guard</code> · <code>npm install hallucination-guard</code>
 </p>
 
 ---
