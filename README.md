@@ -110,7 +110,7 @@ console.log(result.explanation);        // "Detected 1 unsupported claim(s) …"
 
 ## CLI
 
-Hallucination Guard ships with a global CLI powered by Typer + Rich.
+World-class developer CLI powered by Typer + Rich. Confidence bars, progress indicators, colored output.
 
 ### Commands
 
@@ -118,48 +118,82 @@ Hallucination Guard ships with a global CLI powered by Typer + Rich.
 # Check inline text
 hallucination-guard check "Paris is the capital of Germany."
 
-# Check a file
-hallucination-guard file article.txt
+# With per-claim explanations
+hallucination-guard check "text" --explain
 
-# Batch check (JSON array of texts)
-hallucination-guard batch inputs.json
+# JSON output
+hallucination-guard check "text" --json
+
+# Set risk threshold for PASS/FAIL
+hallucination-guard check "text" --confidence-threshold 0.4
+
+# Write output to file
+hallucination-guard check "text" --output result.json
+
+# Check a file
+hallucination-guard file article.txt --pretty --explain
+
+# Batch check with progress bar
+hallucination-guard batch dataset.json --output results.json
+
+# Benchmark against golden dataset
+hallucination-guard benchmark tests/golden_dataset.json
 
 # Start REST API server
 hallucination-guard api --port 8000
 
-# JSON output mode
-hallucination-guard check "Some text" --json
+# Debug mode
+hallucination-guard check "text" --debug
 
-# Verbose debug logging
-hallucination-guard check "Some text" --verbose
+# Quiet mode (result only)
+hallucination-guard check "text" --quiet --json
 ```
+
+### CLI Flags
+
+| Flag                     | Short | Description                                 |
+| ------------------------ | ----- | ------------------------------------------- |
+| `--json`                 | `-j`  | Raw JSON output                             |
+| `--pretty / --no-pretty` |       | Pretty-print (default: on)                  |
+| `--explain`              | `-e`  | Show per-claim explanations                 |
+| `--confidence-threshold` | `-t`  | Risk threshold for PASS/FAIL (default: 0.5) |
+| `--output`               | `-o`  | Write JSON to file                          |
+| `--debug`                |       | Debug logging                               |
+| `--quiet`                | `-q`  | Suppress extra output                       |
 
 ### Sample Output
 
 ```
 ╭────────────────── 🛡  Hallucination Guard ──────────────────╮
-│        72% Hallucination Risk  [HIGH]                       │
-╰────────────────── confidence 28% ───────────────────────────╯
-  Total claims   : 2
-  Supported      : 0
-  Unsupported    : 2
-  Avg similarity : 0.2100
+│  ✗ 72% Hallucination Risk  [HIGH]                         │
+╰────────────────────────────────────── 2.3s ────────╯
+  Confidence  ██████░░░░░░░░░░░░░░ 28%
+  Risk        ██████████████░░░░░░ 72%
 
-  Detected 2 unsupported claim(s) out of 2. Hallucination risk: 72%.
+  Total claims    2
+  Supported       0
+  Unsupported     2
 
-Highlighted Text
-  ⚠[The Eiffel Tower is located in Berlin and was built in 1920.]⚠
+─────────────── Highlighted Text ───────────────
+  ⚠[The Eiffel Tower is located in Berlin …]⚠
 
-┏━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┓
-┃ #  ┃ Claim                                    ┃ Confidence ┃ Evidence        ┃
-┡━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━┩
-│ 1  │ The Eiffel Tower is located in Berlin …  │     0.2100 │ The Eiffel …    │
-└────┴─────────────────────────────────────────┴────────────┴─────────────────┘
+──────────────── Flagged Claims ────────────────
+  # │ Claim                      │ Confidence          │ Source
+  1 │ The Eiffel Tower is in …   │ ████░░░░░░░░░░ 21% │ Wikipedia
 
-Explanations
-  🔴 [1] The Eiffel Tower is located in Berlin … [high]
-      This claim could not be verified …
+╭─────────────────────────────────────────────────╮
+│ ⚠  FAIL  Risk 72% exceeds threshold 50%      │
+╰─────────────────────────────────────────────────╯
 ```
+
+### Benchmark
+
+```bash
+hallucination-guard benchmark tests/golden_dataset.json
+hallucination-guard benchmark dataset.json --json --output report.json
+```
+
+Outputs accuracy, precision, recall, F1 score, confusion matrix, and per-case details with progress bar.
 
 ---
 
@@ -297,61 +331,63 @@ if (await isInstalled()) {
 
 ## REST API
 
+Production-grade FastAPI server with auth, rate limiting, batch processing, and metrics.
+
 ### Start the Server
 
 ```bash
 hallucination-guard api --port 8000
-# or
-uvicorn hallucination_guard.api.server:app --port 8000
+
+# With API key authentication
+HALLUCINATION_GUARD_API_KEY=your-secret-key hallucination-guard api
+
+# Custom rate limit (requests/min per IP)
+HALLUCINATION_GUARD_RATE_LIMIT=120 hallucination-guard api
 ```
 
-### `GET /health`
+### Endpoints
 
-```bash
-curl http://localhost:8000/health
-```
-
-```json
-{"status": "ok", "version": "0.2.0"}
-```
+| Method | Path            | Description                                |
+| ------ | --------------- | ------------------------------------------ |
+| `GET`  | `/health`       | Health check + model status                |
+| `GET`  | `/metrics`      | Server metrics (requests, latency, uptime) |
+| `POST` | `/detect`       | Single text detection                      |
+| `POST` | `/detect/batch` | Batch detection (multiple texts)           |
+| `GET`  | `/docs`         | Interactive OpenAPI docs                   |
+| `GET`  | `/redoc`        | ReDoc API reference                        |
 
 ### `POST /detect`
 
 ```bash
 curl -X POST http://localhost:8000/detect \
   -H "Content-Type: application/json" \
+  -H "X-API-Key: your-secret-key" \
   -d '{"text": "The Great Wall of China was built in 1995 by NASA."}'
 ```
 
+### `POST /detect/batch`
+
+```bash
+curl -X POST http://localhost:8000/detect/batch \
+  -H "Content-Type: application/json" \
+  -d '{"texts": ["Text one.", "Text two.", "Text three."]}'
+```
+
+```json
+{"results": [...], "total": 3, "processing_time_ms": 2340.5}
+```
+
+### `GET /metrics`
+
 ```json
 {
-  "hallucinated": true,
-  "hallucination_risk": 0.72,
-  "confidence": 0.28,
-  "total_claims": 1,
-  "supported_claims": 0,
-  "unsupported_claims": 1,
-  "average_similarity": 0.18,
-  "flagged_claims": [
-    {
-      "claim": "The Great Wall of China was built in 1995 by NASA.",
-      "confidence": 0.18,
-      "evidence": "The Great Wall of China is a series of fortifications …",
-      "source": "Wikipedia: Great"
-    }
-  ],
-  "explanations": [
-    {
-      "claim": "The Great Wall of China was built in 1995 by NASA.",
-      "hallucinated": true,
-      "confidence": 0.18,
-      "explanation": "This claim could not be verified …",
-      "severity": "high",
-      "source": "Wikipedia: Great"
-    }
-  ],
-  "highlighted_text": "⚠[The Great Wall of China was built in 1995 by NASA.]⚠",
-  "explanation": "Detected 1 unsupported claim(s) out of 1. Hallucination risk: 72%."
+  "total_requests": 142,
+  "total_detections": 156,
+  "total_batch_detections": 8,
+  "avg_latency_ms": 1230.5,
+  "total_claims_analysed": 412,
+  "total_hallucinations_detected": 87,
+  "uptime_seconds": 3600.0
 }
 ```
 
@@ -359,50 +395,62 @@ curl -X POST http://localhost:8000/detect \
 
 ## Integrations
 
-Ready-to-use examples for popular AI frameworks in [`examples/`](examples/):
+First-class integration modules — import directly, no wrapper code needed.
 
-| Integration      | File                        | Description                      |
-| ---------------- | --------------------------- | -------------------------------- |
-| **LangChain**    | `langchain_integration.py`  | Post-process LLM outputs         |
-| **LlamaIndex**   | `llamaindex_integration.py` | Verify RAG responses             |
-| **RAG Pipeline** | `rag_pipeline.py`           | Generic `RAGGuard` wrapper class |
-| **Streamlit**    | `streamlit_app.py`          | Web UI dashboard                 |
-| **REST Client**  | `api_client.py`             | HTTP client example              |
-| **SDK**          | `basic_usage.py`            | Python SDK patterns              |
+| Integration    | Import                                                                             | Description                           |
+| -------------- | ---------------------------------------------------------------------------------- | ------------------------------------- |
+| **LangChain**  | `from hallucination_guard.integrations.langchain import HallucinationCallback`     | Callback handler for LLM chains       |
+| **LlamaIndex** | `from hallucination_guard.integrations.llamaindex import HallucinationGuardPlugin` | Query pipeline plugin                 |
+| **RAG**        | `from hallucination_guard.integrations.rag import RAGGuard, rag_verify`            | Wrapper + decorator for RAG functions |
 
-### LangChain Example
+### LangChain Callback
 
 ```python
-from hallucination_guard import detect
+from hallucination_guard.integrations.langchain import HallucinationCallback
 
-def verify_llm_output(response: str, threshold: float = 0.5) -> dict:
-    result = detect(response)
-    return {
-        "response": response,
-        "safe_to_use": result.hallucination_risk < threshold,
-        "risk": result.hallucination_risk,
-        "flagged": result.flagged_claims,
-    }
+callback = HallucinationCallback(threshold=0.5)
+
+# Use with any LangChain LLM
+llm = ChatOpenAI(callbacks=[callback])
+response = llm.invoke("Tell me about the Eiffel Tower")
+
+# Check results
+print(callback.flagged)       # True/False
+print(callback.last_result)   # Full DetectionResult
+print(callback.history)       # All checks
 ```
 
-### RAG Guard Pattern
+### LlamaIndex Plugin
 
 ```python
-from hallucination_guard import detect
+from hallucination_guard.integrations.llamaindex import HallucinationGuardPlugin
 
-class RAGGuard:
-    def __init__(self, rag_fn, threshold=0.5):
-        self.rag_fn = rag_fn
-        self.threshold = threshold
+plugin = HallucinationGuardPlugin(threshold=0.5)
 
-    def query(self, question: str):
-        answer = self.rag_fn(question)
-        result = detect(answer)
-        return {
-            "answer": answer,
-            "safe": result.hallucination_risk < self.threshold,
-            "risk": result.hallucination_risk,
-        }
+response = query_engine.query("What is Python?")
+result = plugin.verify_response(response)
+
+print(result["safe"])   # True/False
+print(result["risk"])   # 0.0–1.0
+print(plugin.get_stats())  # Aggregate stats
+```
+
+### RAG Guard (Wrapper + Decorator)
+
+```python
+from hallucination_guard.integrations.rag import RAGGuard, rag_verify
+
+# Wrapper class
+guard = RAGGuard(my_rag_fn, threshold=0.4)
+result = guard.query("What is Python?")
+print(result.safe, result.risk)
+
+# Decorator — raises HallucinationError if threshold exceeded
+@rag_verify(threshold=0.4)
+def my_rag(query: str) -> str:
+    return "some answer"
+
+result = my_rag("What is Python?")
 ```
 
 ---
@@ -448,7 +496,7 @@ Input Text
 ├── src/hallucination_guard/
 │   ├── __init__.py            # Public API: detect, score, explain
 │   ├── sdk.py                 # SDK convenience functions
-│   ├── cli.py                 # Typer CLI (check, file, batch, api)
+│   ├── cli.py                 # Typer CLI (check, file, batch, benchmark, api)
 │   ├── core/
 │   │   ├── detector.py        # Pipeline orchestration
 │   │   ├── claims.py          # Claim extraction (spaCy)
@@ -456,8 +504,12 @@ Input Text
 │   │   ├── scorer.py          # Risk scoring engine
 │   │   ├── explainer.py       # Explanation generation
 │   │   └── highlight.py       # Text highlighting
+│   ├── integrations/
+│   │   ├── langchain.py       # LangChain callback handler
+│   │   ├── llamaindex.py      # LlamaIndex plugin
+│   │   └── rag.py             # RAG guard + decorator
 │   ├── api/
-│   │   └── server.py          # FastAPI REST server
+│   │   └── server.py          # FastAPI REST server (auth, batch, metrics)
 │   └── utils/
 │       └── config.py          # Env-based configuration
 ├── npm/                       # Node.js / TypeScript SDK
@@ -490,6 +542,8 @@ All settings via environment variables or constructor arguments:
 | `HALLUCINATION_GUARD_HOST`              | `0.0.0.0`          | API bind address               |
 | `HALLUCINATION_GUARD_PORT`              | `8000`             | API port                       |
 | `HALLUCINATION_GUARD_LOG_LEVEL`         | `INFO`             | Logging level                  |
+| `HALLUCINATION_GUARD_API_KEY`           | *(disabled)*       | API key for auth (optional)    |
+| `HALLUCINATION_GUARD_RATE_LIMIT`        | `60`               | Max requests/min per IP        |
 
 ---
 
@@ -535,16 +589,21 @@ make demo         # run CLI demo
 - [x] Python SDK (`detect`, `score`, `explain`)
 - [x] Explanation engine with severity ratings
 - [x] Node.js / TypeScript SDK (npm package)
-- [x] Integration examples (LangChain, LlamaIndex, RAG, Streamlit)
+- [x] First-class integrations (LangChain, LlamaIndex, RAG)
+- [x] Benchmark system with precision/recall/F1
+- [x] API key authentication + rate limiting
+- [x] Batch processing API endpoint
+- [x] Metrics endpoint (`/metrics`)
+- [x] CI/CD (GitHub Actions)
+- [x] Issue/PR templates + security policy
 - [ ] LLM-based claim extraction (GPT / Ollama / local)
 - [ ] Multi-source verification (Wikidata, PubMed, Knowledge Graph)
 - [ ] Async pipeline for concurrent verification
 - [ ] Caching layer (Redis / SQLite)
 - [ ] Custom knowledge bases
 - [ ] Web UI dashboard
-- [ ] PyPI package distribution
-- [ ] Prometheus metrics export
-- [ ] API key authentication
+- [ ] PyPI + npm package distribution
+- [ ] OpenTelemetry observability
 - [ ] Confidence calibration with labeled datasets
 - [ ] Webhook notifications for flagged content
 

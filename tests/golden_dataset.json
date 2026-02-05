@@ -1,0 +1,142 @@
+[
+  {
+    "id": "factual_001",
+    "text": "The Eiffel Tower is located in Paris, France. It was completed in 1889.",
+    "expected_hallucination": false,
+    "category": "factual",
+    "description": "Both claims are correct."
+  },
+  {
+    "id": "factual_002",
+    "text": "Python is a high-level programming language created by Guido van Rossum. It was first released in 1991.",
+    "expected_hallucination": false,
+    "category": "factual",
+    "description": "Correct attribution and date."
+  },
+  {
+    "id": "factual_003",
+    "text": "Albert Einstein developed the theory of relativity.",
+    "expected_hallucination": false,
+    "category": "factual",
+    "description": "Correct scientific attribution."
+  },
+  {
+    "id": "factual_004",
+    "text": "Water is composed of hydrogen and oxygen atoms.",
+    "expected_hallucination": false,
+    "category": "factual",
+    "description": "Basic chemistry fact."
+  },
+  {
+    "id": "factual_005",
+    "text": "The Amazon River is the largest river by discharge volume in the world.",
+    "expected_hallucination": false,
+    "category": "factual",
+    "description": "Correct geography fact."
+  },
+  {
+    "id": "hallucinated_001",
+    "text": "The Eiffel Tower is located in Berlin, Germany.",
+    "expected_hallucination": true,
+    "category": "hallucinated",
+    "description": "Eiffel Tower is in Paris, not Berlin."
+  },
+  {
+    "id": "hallucinated_002",
+    "text": "The telephone was invented by Albert Einstein in 1920.",
+    "expected_hallucination": true,
+    "category": "hallucinated",
+    "description": "The telephone was invented by Alexander Graham Bell in 1876."
+  },
+  {
+    "id": "hallucinated_003",
+    "text": "The Great Wall of China was built in 1995 by NASA.",
+    "expected_hallucination": true,
+    "category": "hallucinated",
+    "description": "Completely fabricated date and attribution."
+  },
+  {
+    "id": "hallucinated_004",
+    "text": "Water is composed of three hydrogen atoms and one carbon atom.",
+    "expected_hallucination": true,
+    "category": "hallucinated",
+    "description": "Water is H2O, not H3C."
+  },
+  {
+    "id": "hallucinated_005",
+    "text": "Microsoft was founded by Steve Jobs and Steve Wozniak in a garage in Cupertino.",
+    "expected_hallucination": true,
+    "category": "hallucinated",
+    "description": "Microsoft was founded by Bill Gates and Paul Allen. Jobs/Wozniak founded Apple."
+  },
+  {
+    "id": "hallucinated_006",
+    "text": "The Amazon River flows through the Sahara Desert and empties into the Pacific Ocean.",
+    "expected_hallucination": true,
+    "category": "hallucinated",
+    "description": "The Amazon flows through South America into the Atlantic."
+  },
+  {
+    "id": "hallucinated_007",
+    "text": "Isaac Newton discovered penicillin in 1732.",
+    "expected_hallucination": true,
+    "category": "hallucinated",
+    "description": "Penicillin was discovered by Alexander Fleming in 1928."
+  },
+  {
+    "id": "mixed_001",
+    "text": "Albert Einstein developed the theory of relativity. He also invented the smartphone in 1905.",
+    "expected_hallucination": true,
+    "category": "mixed",
+    "description": "First claim correct, second fabricated."
+  },
+  {
+    "id": "mixed_002",
+    "text": "The Eiffel Tower was designed by Gustave Eiffel and completed in 1889. It is located in Berlin.",
+    "expected_hallucination": true,
+    "category": "mixed",
+    "description": "First sentence correct, location wrong."
+  },
+  {
+    "id": "mixed_003",
+    "text": "Python was created by Guido van Rossum. It was developed at Microsoft Research in Seattle.",
+    "expected_hallucination": true,
+    "category": "mixed",
+    "description": "Creator correct. Development location wrong."
+  },
+  {
+    "id": "ambiguous_001",
+    "text": "Machine learning is a subset of artificial intelligence that focuses on pattern recognition.",
+    "expected_hallucination": false,
+    "category": "ambiguous",
+    "description": "Generally accepted but simplified description."
+  },
+  {
+    "id": "ambiguous_002",
+    "text": "The speed of light is approximately 300,000 kilometers per second.",
+    "expected_hallucination": false,
+    "category": "ambiguous",
+    "description": "Approximately correct (299,792 km/s)."
+  },
+  {
+    "id": "ambiguous_003",
+    "text": "Napoleon was short for his era.",
+    "expected_hallucination": true,
+    "category": "ambiguous",
+    "description": "Common misconception. Napoleon was average height for his time."
+  },
+  {
+    "id": "ambiguous_004",
+    "text": "Humans use only 10 percent of their brains.",
+    "expected_hallucination": true,
+    "category": "ambiguous",
+    "description": "Well-known myth — humans use all of their brain."
+  },
+  {
+    "id": "hallucinated_008",
+    "text": "The first computer was built by Thomas Edison in 1895.",
+    "expected_hallucination": true,
+    "category": "hallucinated",
+    "description": "Edison did not build a computer."
+  }
+]
